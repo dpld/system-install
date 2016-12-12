@@ -29,7 +29,15 @@
       - dropbear
       - lsb-release
       - mdadm
-      
+      - firmware-realtek
+      - kbd
+      - xen-linux-system
+      - xen-hypervisor-4.4-amd64
+      - xen-utils-4.4
+      - xen-tools
+      - libxen-4.4
+      - xenstore-utils
+
   tasks:
     - name: install debootstrap
       apt: pkg='{{ item }}' state=present update_cache=yes
@@ -56,7 +64,7 @@
         - { dist: vivid, def: gutsy }
         - { dist: willy, def: gutsy }
         - { dist: xenial, def: gutsy }
-
+        - { dist: jessie, def: sid }
 
     - name: Install Linux on local hard drive. This might take some time...
       system_install:
@@ -98,4 +106,8 @@
       file:
         dest: /srv/target/etc/resolvconf/resolv.conf.d/tail
         state: touch
+      ignore_errors: yes
+
+    - name: dpkg divert for xen
+      command: dpkg-divert --divert /etc/grub.d/08_linux_xen --rename /etc/grub.d/20_linux_xen && update-grub
       ignore_errors: yes

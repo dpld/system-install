@@ -1,0 +1,39 @@
+disk_config sdc bootable:1 disklabel:gpt-bios
+primary -        60000     -    -
+primary -        5000      -    -
+primary -        0-       - -
+
+disk_config sdd bootable:1 disklabel:gpt-bios
+primary -        60000     -    -
+primary -        5000      -    -
+primary -        0-       - -
+
+
+disk_config raid
+raid1 /           sdc1,sdd1     ext4    rw
+raid1 swap        sdc2,sdd2     swap    sw
+raid1 -           sdc3,sdd3 - -
+
+disk_config lvm
+vg      vg0raid1        md2
+vg0raid1-REMOVE_ME - 1 - -
+
+
+disk_config sde disklabel:gpt
+primary -        0-       - -
+
+disk_config sdf disklabel:gpt
+primary -        0-       - -
+
+disk_config sdg disklabel:gpt
+primary -        0-       - -
+
+disk_config sdh disklabel:gpt
+primary -        0-       - -
+
+disk_config raid
+raid1 -           sde1,sdf1 - -
+raid1 -           sdg1,sdh1 - -
+
+vg      vg1raid1        md3,md4
+vg1raid1-REMOVE_ME - 1 - -

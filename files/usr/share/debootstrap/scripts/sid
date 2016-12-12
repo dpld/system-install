@@ -32,6 +32,11 @@ work_out_debs () {
 		# ldd.fake needs binutils
 		required="$required binutils"
 	fi
+        case $MIRRORS in
+            https://*)
+            base="$base apt-transport-https ca-certificates" 
+            ;;
+        esac
 }
 
 first_stage_install () {
@@ -98,7 +103,8 @@ second_stage_install () {
 
 	p; progress $baseprog $bases INSTCORE "Installing core packages" #2
 	ln -sf mawk "$TARGET/usr/bin/awk"
-	x_core_install base-files base-passwd
+	x_core_install base-passwd
+	x_core_install base-files
 	p; progress $baseprog $bases INSTCORE "Installing core packages" #3
 	x_core_install dpkg
 
