@@ -74,6 +74,7 @@
         image: '{{ image | default() }}'
         kernel: yes
         partition: '{{ partition }}'
+        grub_install_to: '{{ grub_install_to }}'
 
     # Fix ssh configuration that prevent root login with password.
     - name: Fix ssh login

@@ -152,6 +152,7 @@ class SystemInstall(AnsibleModule):
                 partition=dict(required=False, default=None),
                 root_passwd=dict(required=False, default='Ansible'),
                 reboot=dict(required=False, type='bool', default=False),
+                grub_install_to=dict(required=False, default=None),
             ),
             supports_check_mode=True)
         self.changed = False
@@ -160,7 +161,8 @@ class SystemInstall(AnsibleModule):
         self.stderr = []
         self.fstab = None
         self.logfile = open('/tmp/system-install.log', 'w')
-
+        if self.params['grub_install_to']:
+            self.params['grub_install_to'] = self.params['grub_install_to'].split(',')
         self.log('Starting install')
 
         self.vendor = None
@@ -566,7 +568,8 @@ If PKGS is a list, a loop is performed for each item.
                     if match:
                         self.disk_vars[match.group(1)] = match.group(2)
                 fh.close()
-
+            print self.disk_vars
+            print self.FAI_DISK_VAR
             # remove 'set -e' in /usr/sbin/grub-mkconfig to prevent error:
             #   failed: mount: special device tmpfs does not exist
             # when / is a tmpfs
@@ -582,6 +585,7 @@ If PKGS is a list, a loop is performed for each item.
             # First generate GRUB configuration
             cmd = [ 'chroot', self.params['path'], 'update-grub']
             self.log('running update-grub')
+            print cmd
             rc, out, err = self.run_command(cmd)
             if rc:
                 self.fail_json(msg="%s failed: %s" %
@@ -590,21 +594,24 @@ If PKGS is a list, a loop is performed for each item.
             self.log(out.splitlines())
             self.log(err.splitlines())
             # secondly install grub into boot device
-            cmd = [ 'chroot', self.params['path'], 'grub-install',
-                    self.disk_vars['BOOT_DEVICE'] ]
-
-            self.log('running grub-install %s' % self.disk_vars['BOOT_DEVICE'])
-            rc, out, err = self.run_command(cmd)
-            if rc:
-                self.fail_json(msg="%s failed: %s" %
+            if not self.params['grub_install_to']:
+                self.params['grub_install_to'] = [self.disk_vars['BOOT_DEVICE']]
+            for boot_device in self.params['grub_install_to']:
+                cmd = [ 'chroot', self.params['path'], 'grub-install',
+                        self.disk_vars['BOOT_DEVICE'] ]
+                print  cmd
+                self.log('running grub-install %s' % self.disk_vars['BOOT_DEVICE'])
+                rc, out, err = self.run_command(cmd)
+                if rc:
+                    self.fail_json(msg="%s failed: %s" %
                                  (' '.join(pipes.quote(arg) for arg in cmd), err),
                                  stdout=out, stderr=err)
-            self.log(out.splitlines())
-            self.log(err.splitlines())
-            self.msg.append("grub-install succeded in %s" %
+                self.log(out.splitlines())
+                self.log(err.splitlines())
+                self.msg.append("grub-install succeded in %s" %
                             (self.disk_vars['BOOT_DEVICE']))
-            self.stdout.append(out)
-            self.stderr.append(err)
+                self.stdout.append(out)
+                self.stderr.append(err)
 
         self.umount_pseudo()
         self.remove_policy()
@@ -651,7 +658,7 @@ If PKGS is a list, a loop is performed for each item.
 
 def main():
     si = SystemInstall()
-
+    """
     if not si.params['partition'] is None:
         si.partition()
     if si.params['image'] is not None and si.params['image'] != '':
@@ -661,6 +668,8 @@ def main():
     si.install_extra_packages()
     if not si.params['kernel'] is None:
         si.install_kernel()
+    """
+    si.install_kernel()
     si.setup_root_passwd()
     si.fix_install()
     #
